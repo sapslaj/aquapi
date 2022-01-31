@@ -51,6 +51,8 @@ module "cloudfront" {
   price_class = "PriceClass_100"
   aliases     = [var.images_domain]
 
+  default_root_object = "index.html"
+
   origin = {
     s3 = {
       domain_name      = module.images_bucket.s3_bucket_bucket_regional_domain_name
