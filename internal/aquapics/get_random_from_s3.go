@@ -12,7 +12,14 @@ import (
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
+const keyCharacters = "0123456789abcdef"
+
 var ignoredKeys = []string{"error.html", "index.html", "favicon.ico"}
+
+func randint(i int) int {
+	rand.Seed(time.Now().UnixMicro())
+	return rand.Intn(i)
+}
 
 func isBadKey(key string) bool {
 	for _, v := range ignoredKeys {
@@ -62,8 +69,10 @@ func GetRandomFromS3() (s3types.Object, error) {
 	regionalS3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.Region = location
 	})
+	randomPrefix := string(keyCharacters[randint(len(keyCharacters))])
 	output, err := regionalS3Client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
 		Bucket: bucketName,
+		Prefix: aws.String(randomPrefix),
 	})
 	if err != nil {
 		return s3types.Object{}, err
