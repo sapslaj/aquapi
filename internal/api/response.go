@@ -8,13 +8,17 @@ import (
 	"github.com/google/jsonapi"
 )
 
+func fuck(err error) events.APIGatewayProxyResponse {
+	return events.APIGatewayProxyResponse{StatusCode: 503, Body: err.Error()}
+}
+
 // ResponseErrors is a factory function to generate a JSON API response with
 // multiple ErrorObjects
 func ResponseErrors(statusCode int, errors []*jsonapi.ErrorObject) events.APIGatewayProxyResponse {
 	buf := new(bytes.Buffer)
 	err := jsonapi.MarshalErrors(buf, errors)
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: 503, Body: err.Error()}
+		return fuck(err)
 	}
 	return events.APIGatewayProxyResponse{
 		StatusCode: statusCode,
@@ -39,7 +43,7 @@ func ResponseSuccess(payload interface{}) events.APIGatewayProxyResponse {
 	buf := new(bytes.Buffer)
 	err := jsonapi.MarshalPayload(buf, payload)
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: 503, Body: err.Error()}
+		return ResponseError(503, "error marshalling payload", err.Error())
 	}
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
