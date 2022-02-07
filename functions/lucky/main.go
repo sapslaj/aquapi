@@ -13,8 +13,7 @@ import (
 // Respone maps to APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
-// Hander lambda handler
-func Handler(ctx context.Context) (Response, error) {
+func handler(ctx context.Context) (Response, error) {
 	object, err := aquapics.GetRandomFromS3()
 	if err != nil {
 		return Response{StatusCode: 503}, err
@@ -34,5 +33,5 @@ func Handler(ctx context.Context) (Response, error) {
 }
 
 func main() {
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }

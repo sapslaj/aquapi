@@ -37,12 +37,17 @@ locals {
     }
 
     functions = {
-      random = {
-        handler = "out/random"
+      lucky = {
+        handler = "out/lucky"
         events = [{
           httpApi = {
+            path   = "/images/lucky"
+            method = "get",
+          }
+          }, {
+          httpApi = {
             path   = "/"
-            method = "get"
+            method = "get",
           }
         }]
       }
