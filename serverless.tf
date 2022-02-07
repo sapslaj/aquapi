@@ -27,6 +27,9 @@ locals {
         AQUAPI_IMAGES_HOST   = var.images_domain
         AQUAPI_IMAGES_BUCKET = sensitive(var.images_bucket_id)
       }
+      httpApi = {
+        cors = true
+      }
     }
 
     package = {
@@ -41,8 +44,8 @@ locals {
         handler = "out/images"
         events = [{
           httpApi = {
-            path   = "/images",
-            method = "get",
+            path   = "/images"
+            method = "get"
           }
         }]
       }
@@ -51,12 +54,12 @@ locals {
         events = [{
           httpApi = {
             path   = "/images/lucky"
-            method = "get",
+            method = "get"
           }
           }, {
           httpApi = {
             path   = "/"
-            method = "get",
+            method = "get"
           }
         }]
       }
