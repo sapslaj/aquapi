@@ -3,11 +3,9 @@ package aquapics
 import (
 	"context"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
@@ -44,34 +42,13 @@ func getRandomFromContents(objects []s3types.Object) s3types.Object {
 func GetRandomFromS3() (s3types.Object, error) {
 	// This implementation is shit, but it works since there's currently so few
 	// images in S3. Eventually I'll come up with a better algo.
-	cfg, err := config.LoadDefaultConfig(context.TODO(), func(lo *config.LoadOptions) error {
-		lo.Region = os.Getenv("AWS_REGION")
-		return nil
-	})
+	s3BucketClient, err := getS3ClientForBucketName(imagesBucketName)
 	if err != nil {
 		return s3types.Object{}, err
 	}
-
-	bucketName := aws.String(os.Getenv("AQUAPI_IMAGES_BUCKET"))
-
-	defaultS3Client := s3.NewFromConfig(cfg)
-	locationOutput, err := defaultS3Client.GetBucketLocation(context.TODO(), &s3.GetBucketLocationInput{
-		Bucket: bucketName,
-	})
-	if err != nil {
-		return s3types.Object{}, err
-	}
-	location := string(locationOutput.LocationConstraint)
-	if location == "" {
-		location = "us-east-1"
-	}
-
-	regionalS3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = location
-	})
 	randomPrefix := string(keyCharacters[randint(len(keyCharacters))])
-	output, err := regionalS3Client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket: bucketName,
+	output, err := s3BucketClient.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket: aws.String(imagesBucketName),
 		Prefix: aws.String(randomPrefix),
 	})
 	if err != nil {
