@@ -11,8 +11,29 @@ import (
 	"github.com/sapslaj/aquapi/internal/utils"
 )
 
+func applicableImage(tags []string, nsfw string) bool {
+	hasNsfwTag := false
+	for _, tag := range tags {
+		switch tag {
+		case "hidden":
+			return false
+		case "nsfw":
+			hasNsfwTag = true
+		}
+	}
+	if hasNsfwTag && nsfw == "none" {
+		return false
+	} else if hasNsfwTag && nsfw == "allowed" {
+		return true
+	} else if !hasNsfwTag && nsfw == "only" {
+		return false
+	}
+	return true
+}
+
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	count := 1
+	nsfw := "none"
 	for key, value := range request.QueryStringParameters {
 		if key == "count" {
 			c, err := strconv.Atoi(value)
@@ -24,16 +45,36 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			}
 			count = c
 		}
+		if key == "nsfw" {
+			valid := false
+			for _, v := range []string{"none", "allowed", "only"} {
+				if v == value {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				return api.ResponseError(400, "`nsfw` is an invalid value", "`nsfw` must equal 'none', 'allowed', or 'only'."), nil
+			}
+			nsfw = value
+		}
 	}
 	images := make([]*api.Image, count)
-	for c := 0; c < count; c++ {
+	for len(images) < count {
 		object, err := aquapics.GetRandomFromS3()
 		if err != nil {
 			return api.ResponseError(503, "An internal error occurred", err.Error()), err
 		}
-		images[c] = &api.Image{
-			ID:  *object.Key,
-			URL: utils.S3ObjectToUrl(object),
+		tags, err := aquapics.GetTags(object)
+		if err != nil {
+			return api.ResponseError(503, "An internal error occurred", err.Error()), err
+		}
+		if applicableImage(tags, nsfw) {
+			images = append(images, &api.Image{
+				ID:   *object.Key,
+				URL:  utils.S3ObjectToUrl(object),
+				Tags: tags,
+			})
 		}
 	}
 
