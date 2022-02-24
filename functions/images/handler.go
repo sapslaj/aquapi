@@ -59,7 +59,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			nsfw = value
 		}
 	}
-	images := make([]*api.Image, count)
+	images := []*api.Image{}
 	for len(images) < count {
 		object, err := aquapics.GetRandomFromS3()
 		if err != nil {
