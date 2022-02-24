@@ -1,11 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/sapslaj/aquapi/internal/dev"
 )
+
+func stringSliceContains(input []string, match string) bool {
+	for _, s := range input {
+		if s == match {
+			return true
+		}
+	}
+	return false
+}
 
 func useMockRequest(t *testing.T, r *events.APIGatewayProxyRequest) (*dev.MockRequest, map[string]interface{}, string) {
 	mr := dev.NewMockRequest(handler, r)
@@ -74,5 +84,25 @@ func TestErrorsOnLargeCount(t *testing.T) {
 	errors := body["errors"].([]interface{})
 	if len(errors) == 0 {
 		t.Fatal("errors length is 0: ", body, bodystring)
+	}
+}
+
+func TestAcceptsNsfwParam(t *testing.T) {
+	t.Skip("test is a lil bonkers right now")
+	_, body, bodystring := useMockRequest(t, &events.APIGatewayProxyRequest{
+		Resource:   "/",
+		Path:       "/",
+		HTTPMethod: "GET",
+		QueryStringParameters: map[string]string{
+			"nsfw": "only",
+		},
+	})
+	data := body["data"].([]interface{})
+	for i, d := range data {
+		datum := d.(map[string]interface{})
+		attributes := datum["attributes"].(map[string][]string)
+		if !stringSliceContains(attributes["tags"], "nsfw") {
+			t.Fatal("tags for "+fmt.Sprint(i)+" does not contain nsfw", body, bodystring)
+		}
 	}
 }
