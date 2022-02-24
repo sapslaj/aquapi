@@ -6,6 +6,13 @@ data "aws_iam_policy_document" "role" {
     ]
     resources = [sensitive(var.images_bucket_arn)]
   }
+
+  statement {
+    actions = [
+      "s3:GetObjectTagging",
+    ]
+    resources = [sensitive(join("", [var.images_bucket_arn, "/*"]))]
+  }
 }
 
 locals {
