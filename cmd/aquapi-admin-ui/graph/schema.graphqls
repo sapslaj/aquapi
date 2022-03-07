@@ -1,0 +1,25 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Image {
+  id: String!
+  url: String!
+  tags: [String!]!
+}
+
+type Query {
+  Image(id:String!): Image
+  Images(sort: String, limit: Int, allowTags: [String], omitTags: [String], onlyTags: [String]): [Image]!
+}
+
+input ImageTagsInput {
+  imageId: String!
+  tags: [String!]!
+}
+
+type Mutation {
+  AddTags(input: ImageTagsInput): Image!
+  RemoveTags(input: ImageTagsInput): Image!
+  SetTags(input: ImageTagsInput): Image!
+}

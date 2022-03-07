@@ -28,7 +28,13 @@ func GetTags(object s3types.Object) ([]string, error) {
 	for _, tag := range output.TagSet {
 		if aws.ToString(tag.Key) == tagsTagKey {
 			raw := aws.ToString(tag.Value)
-			tags = strings.Split(raw, tagSeperator)
+			for _, tag := range strings.Split(raw, tagSeperator) {
+				if tag == "" {
+					continue
+				}
+				tags = append(tags, tag)
+			}
+			break
 		}
 	}
 	return tags, nil
