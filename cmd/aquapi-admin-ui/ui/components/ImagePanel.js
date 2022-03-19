@@ -2,7 +2,7 @@ const { createElement: e } = React;
 
 import ImageTagToggle from './ImageTagToggle.js';
 
-const imageTags = ['hidden', 'nsfw'];
+const imageTags = ['hidden', 'nsfw', 'ecchi', 'hentai', 'meme', 'collage'];
 
 export default function ImagePanel({idx, replaceImage, id, url, tags}) {
   const thisImageTags = imageTags.reduce((o, key) => ({ ...o, [key]: tags.includes(key)}), {})
