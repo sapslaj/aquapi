@@ -8,7 +8,9 @@ export default function ImagePanel({idx, replaceImage, id, url, tags}) {
   const thisImageTags = imageTags.reduce((o, key) => ({ ...o, [key]: tags.includes(key)}), {})
 
   function updateImage() {
-    replaceImage(idx, {id, url, tags: imageTags.filter((tag) => thisImageTags[tag])})
+    if (replaceImage) {
+      replaceImage(idx, {id, url, tags: imageTags.filter((tag) => thisImageTags[tag])})
+    }
   }
 
   function updateImageTag(tag, value) {

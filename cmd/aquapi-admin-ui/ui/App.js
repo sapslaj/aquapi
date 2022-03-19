@@ -1,79 +1,42 @@
-const { createElement: e, memo, useEffect, useState } = React;
+import Form from './pages/Form.js';
+import Random from './pages/Random.js';
 
-import graphqlQuery from './graphqlQuery.js';
-import ImagePanel from './components/ImagePanel.js';
-
-const imagesQuery = `
-query {
-  Images(limit: 12) {
-    id
-    url
-    tags
-  }
-}
-`;
+const { createElement: e, memo, useState, Fragment } = React;
 
 export default function App() {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('Random');
 
-  function replaceImage(idx, image) {
-    setImages([...images.slice(0, idx), image, ...images.slice(idx+1)])
+  const NavItem = ({ name }) => {
+    const className = tab === name ? 'nav-link active' : 'nav-link';
+    const onClick = () => setTab(name);
+    return e('a', { href: '#', className, onClick}, name);
   }
 
-  function loadImages() {
-    setLoading(true);
-    graphqlQuery({query: imagesQuery})
-      .then(res => res.json())
-      .then((result) => {
-        if ('errors' in result) {
-          console.log(result);
-        } else {
-          setImages([...images, ...result.data.Images]);
-        }
-        setLoading(false);
-      }, (error) => {
-        console.log(error);
-      });
+  const navItem = (name) => (
+    e(NavItem, {key: name, name})
+  )
+
+  const PageWrapper = ({ name, component }) => {
+    const display = tab === name ? 'block': 'none';
+    const c = e(memo(component))
+    return e('div', {style: {display}}, c);
   }
 
-  useEffect(() => {
-    if (images.length === 0) {
-      loadImages()
-    }
-  })
+  const pageWrapper = (component) => (
+    e(PageWrapper, {key: component.name, name: component.name, component: component})
+  )
 
-  let loadingZone = null;
-  if (loading) {
-    loadingZone = e('div', {
-      key: 'loading',
-      className: 'alert alert-primary'
-    }, 'Loading...');
-  } else {
-    loadingZone = e('button', {
-      key: 'loading',
-      type: 'button',
-      className: 'btn btn-primary',
-      onClick: () => loadImages()
-    }, 'Load More');
-  }
-
-  return e('div', {key: 'container', className: 'container-fluid'}, [
-    e('div', {
-      key: 'row',
-      className: 'row row-cols-4'
-    }, images.map((i, idx) => e(memo(ImagePanel), {
-      ...i,
-      idx,
-      replaceImage,
-      key: i.id
-    }))),
-    e('div', {
-      key: 'loading-row',
-      className: 'row justify-content-md-center'
-    }, e('div', {
-      key: 'loading-col',
-      className: 'col-2'
-    }, loadingZone)),
+  return e(Fragment, null, [
+    e('nav', {className: 'navbar navbar-expand navbar-dark bg-dark'},
+      e('div', {className: 'container-fluid justify-content-start'}, [
+        e('a', {key: 'brand', className: 'navbar-brand', href: '#'}, 'AquaPI Admin'),
+        e('div', {className: 'navbar-nav'}, [
+          navItem('Random'),
+          navItem('Form'),
+        ])
+      ])
+    ),
+    pageWrapper(Random),
+    pageWrapper(Form),
   ])
 }
