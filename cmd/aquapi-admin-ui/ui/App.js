@@ -27,10 +27,10 @@ export default function App() {
   )
 
   return e(Fragment, null, [
-    e('nav', {className: 'navbar navbar-expand navbar-dark bg-dark'},
+    e('nav', {key: 'nav', className: 'navbar navbar-expand navbar-dark bg-dark'},
       e('div', {className: 'container-fluid justify-content-start'}, [
         e('a', {key: 'brand', className: 'navbar-brand', href: '#'}, 'AquaPI Admin'),
-        e('div', {className: 'navbar-nav'}, [
+        e('div', {key: 'links', className: 'navbar-nav'}, [
           navItem('Random'),
           navItem('Form'),
         ])
