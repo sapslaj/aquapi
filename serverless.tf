@@ -49,6 +49,7 @@ locals {
     functions = {
       images = {
         handler = "out/images"
+        timeout = 60
         events = [{
           httpApi = {
             path   = "/images"
