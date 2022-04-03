@@ -15,9 +15,9 @@ func applicableImage(tags []string, nsfw string) bool {
 	hasNsfwTag := false
 	for _, tag := range tags {
 		switch tag {
-		case "hidden", "meme", "collage":
+		case aquapics.HIDDEN, aquapics.MEME, aquapics.COLLAGE:
 			return false
-		case "nsfw", "ecchi", "hentai":
+		case aquapics.NSFW, aquapics.ECCHI, aquapics.HENTAI:
 			hasNsfwTag = true
 		}
 	}

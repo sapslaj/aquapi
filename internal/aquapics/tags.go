@@ -12,6 +12,25 @@ import (
 const tagsTagKey = "AquaPITags"
 const tagSeperator = ":"
 
+// Tag definitions
+const (
+	HIDDEN  string = "hidden"
+	NSFW    string = "nsfw"
+	ECCHI   string = "ecchi"
+	HENTAI  string = "hentai"
+	MEME    string = "meme"
+	COLLAGE string = "collage"
+)
+
+var TAGS = []string{
+	HIDDEN,
+	NSFW,
+	ECCHI,
+	HENTAI,
+	MEME,
+	COLLAGE,
+}
+
 func GetTags(object s3types.Object) ([]string, error) {
 	s3BucketClient, err := getS3ClientForBucketName(imagesBucketName)
 	tags := []string{}

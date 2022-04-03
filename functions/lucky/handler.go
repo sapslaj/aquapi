@@ -10,14 +10,15 @@ import (
 	"github.com/sapslaj/aquapi/internal/utils"
 )
 
-// Respone maps to APIGatewayProxyResponse
+// Response maps to APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
 func applicableImage(tags []string) bool {
 	for _, tag := range tags {
-		switch tag {
-		case "hidden", "nsfw", "ecchi", "hentai":
-			return false
+		for _, t := range aquapics.TAGS {
+			if t == tag {
+				return false
+			}
 		}
 	}
 	return true
