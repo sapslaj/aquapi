@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go/ptr"
 	"github.com/sapslaj/aquapi/cmd/aquapi-admin-ui/graph/generated"
 	"github.com/sapslaj/aquapi/cmd/aquapi-admin-ui/graph/model"
 	"github.com/sapslaj/aquapi/internal/aquapics"
@@ -49,9 +50,16 @@ func (r *queryResolver) Image(ctx context.Context, id string) (*model.Image, err
 	return imageObjectToModel(object)
 }
 
-func (r *queryResolver) Images(ctx context.Context, sort *string, limit *int, allowTags []*string, omitTags []*string, onlyTags []*string) ([]*model.Image, error) {
-	if sort != nil && *sort != "random" {
-		return nil, fmt.Errorf("only support random sorting right now sorry")
+func (r *queryResolver) Images(ctx context.Context, sort *string, limit *int, afterKey *string, allowTags []*string, omitTags []*string, onlyTags []*string) ([]*model.Image, error) {
+	if sort == nil {
+		sort = ptr.String("random")
+	}
+	if afterKey == nil {
+		afterKey = ptr.String("")
+	}
+	imagesSort, err := NewImagesSort(*sort, *afterKey)
+	if err != nil {
+		return nil, err
 	}
 	defaultLimit := 10
 	if limit == nil {
@@ -62,7 +70,7 @@ func (r *queryResolver) Images(ctx context.Context, sort *string, limit *int, al
 	}
 	models := []*model.Image{}
 	for len(models) < *limit {
-		object, err := aquapics.GetRandomFromS3()
+		object, err := imagesSort.GetNext()
 		if err != nil {
 			return nil, err
 		}

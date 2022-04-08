@@ -4,8 +4,8 @@ import graphqlQuery from '../graphqlQuery.js';
 import ImagePanel, { imageTags } from '../components/ImagePanel.js';
 
 const imagesQuery = `
-query($allowTags: [String], $omitTags: [String], $onlyTags: [String]) {
-  Images(limit: 12, allowTags: $allowTags, omitTags: $omitTags, onlyTags: $onlyTags) {
+query($sort: String!, $afterKey: String, $allowTags: [String], $omitTags: [String], $onlyTags: [String]) {
+  Images(limit: 12, sort: $sort, afterKey: $afterKey, allowTags: $allowTags, omitTags: $omitTags, onlyTags: $onlyTags) {
     id
     url
     tags
@@ -17,9 +17,12 @@ export default function Random() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-  const [variables, setVariables] = useState({});
+  const [variables, setVariables] = useState({
+    sort: 'random',
+    afterKey: '',
+  });
 
-  const makeOnChangeTagSelector = (variable) => (
+  const makeOnChangeTagSelector = (variable, multiple) => (
     (e) => {
       if (e.target.value === '') {
         setVariables({
@@ -27,27 +30,37 @@ export default function Random() {
           [variable]: null
         })
       } else {
+        let value;
+        if (multiple) {
+          value = Array.from(e.target.selectedOptions, option => option.value)
+        } else {
+          value = e.target.value
+        }
         setVariables({
           ...variables,
-          [variable]: Array.from(e.target.selectedOptions, option => option.value)
+          [variable]: value
         })
       }
     }
   )
 
-  const TagSelector = ({ label, variable }) => (
+  const Selector = ({ label, variable, multiple, children }) => (
     e('div', {className: 'd-flex col-2 justify-content-center align-items-center'}, [
       e('label', {key: 'label', className: 'col-form-label flex-grow-1 text-end me-2'}, label),
       e('select', {
         key: 'select',
-        multiple: true,
+        multiple,
         className: 'form-select w-50',
-        onChange: makeOnChangeTagSelector(variable),
-        value: variables[variable] || [],
-      }, [
-        e('option', {key: '__default', value: ''}),
-        ...imageTags.map((tag) => e('option', {key: tag, value: tag}, tag))
-      ]),
+        onChange: makeOnChangeTagSelector(variable, multiple),
+        value: variables[variable],
+      }, children),
+    ])
+  );
+
+  const TagSelector = ({ label, variable }) => (
+    e(Selector, { label, variable, multiple: true }, [
+      e('option', {key: '__default', value: ''}),
+      ...imageTags.map((tag) => e('option', {key: tag, value: tag}, tag))
     ])
   )
 
@@ -71,6 +84,10 @@ export default function Random() {
           } else {
             setImages([...images, ...result.data.Images]);
           }
+          setVariables({
+            ...variables,
+            afterKey: result.data.Images.at(-1).id
+          })
         }
         setLoading(false);
       }, (error) => {
@@ -100,6 +117,19 @@ export default function Random() {
 
   return e('div', {className: 'container-fluid'}, [
     e('div', {key: 'options', className: 'row'}, [
+      e(Selector, { key: 'sort', label: 'sort', variable: 'sort', multiple: false }, [
+        e('option', {key: 'random', value: 'random'}, 'Random'),
+        e('option', {key: 'key', value: 'key'}, 'Key'),
+      ]),
+      e('div', {key: 'afterkey', className: 'd-flex col-2 justify-content-center align-items-center'}, [
+        e('label', {key: 'label', className: 'col-form-label flex-grow-1 text-end me-2'}, 'After Key'),
+        e('input', {
+          key: 'input',
+          className: 'form-control w-50',
+          onChange: makeOnChangeTagSelector('afterKey', false),
+          value: variables['afterKey'],
+        }),
+      ]),
       tagSelector('Allow Tags', 'allowTags'),
       tagSelector('Omit Tags', 'omitTags'),
       tagSelector('Only Tags', 'onlyTags'),

@@ -10,7 +10,7 @@ type Image {
 
 type Query {
   Image(id:String!): Image
-  Images(sort: String, limit: Int, allowTags: [String], omitTags: [String], onlyTags: [String]): [Image]!
+  Images(sort: String, limit: Int, afterKey: String, allowTags: [String], omitTags: [String], onlyTags: [String]): [Image]!
 }
 
 input ImageTagsInput {
