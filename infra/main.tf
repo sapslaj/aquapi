@@ -16,6 +16,21 @@ module "images_bucket" {
   }
 }
 
+module "dynamodb_table" {
+  source  = "terraform-aws-modules/dynamodb-table/aws"
+  version = "~> 3.1.1"
+
+  name     = "aquapi-images-${var.stage}"
+  hash_key = "id"
+
+  attributes = [
+    {
+      name = "id"
+      type = "S"
+    },
+  ]
+}
+
 resource "aws_s3_bucket_object" "root_files" {
   for_each = {
     "index.html" = {
@@ -92,6 +107,10 @@ module "serverless" {
 }
 
 data "aws_cloudformation_stack" "serverless" {
+  depends_on = [
+    module.serverless
+  ]
+
   name = module.serverless.cloudformation_stack_name
 }
 
