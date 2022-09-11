@@ -150,6 +150,12 @@ resource "aws_apigatewayv2_api_mapping" "api" {
   api_id      = data.aws_cloudformation_stack.serverless.outputs["HttpApiId"]
   domain_name = aws_apigatewayv2_domain_name.api.id
   stage       = "$default"
+
+  lifecycle {
+    ignore_changes = [
+      api_id,
+    ]
+  }
 }
 
 resource "cloudflare_record" "api" {

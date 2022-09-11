@@ -3,15 +3,12 @@ data "aws_iam_policy_document" "role" {
     actions = [
       "s3:ListBucket",
       "s3:GetBucketLocation",
-    ]
-    resources = [sensitive(var.images_bucket_arn)]
-  }
-
-  statement {
-    actions = [
       "s3:GetObjectTagging",
     ]
-    resources = [sensitive(join("", [var.images_bucket_arn, "/*"]))]
+    resources = [
+      sensitive(var.images_bucket_arn),
+      sensitive(join("", [var.images_bucket_arn, "/*"]))
+    ]
   }
 
   statement {
@@ -84,6 +81,13 @@ locals {
             path   = "/"
             method = "get"
           }
+        }]
+      }
+      maintenance = {
+        handler = "out/maintenance"
+        timeout = 600
+        events = [{
+          schedule = "rate(24 hours)"
         }]
       }
     }

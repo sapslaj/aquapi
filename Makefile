@@ -4,6 +4,7 @@ build:
 	export GO111MODULE=on
 	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o out/images functions/images/*.go
 	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o out/lucky functions/lucky/*.go
+	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o out/maintenance functions/maintenance/*.go
 
 clean:
 	rm -rf ./out ./vendor
