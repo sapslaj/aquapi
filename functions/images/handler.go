@@ -46,7 +46,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	var omitTagsInput []*string
 	omitTags := []string{aquapics.HIDDEN, aquapics.MEME, aquapics.COLLAGE}
 	if nsfw == "none" {
-		omitTags = append(omitTags, aquapics.ECCHI, aquapics.HENTAI)
+		omitTags = append(omitTags, aquapics.NSFW, aquapics.ECCHI, aquapics.HENTAI)
 	} else if nsfw == "only" {
 		allowTags := []string{aquapics.ECCHI, aquapics.HENTAI}
 		allowTagsInput = ptr.StringSlice(allowTags)
