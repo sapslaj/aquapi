@@ -4,8 +4,8 @@ import graphqlQuery from '../graphqlQuery.js';
 import ImagePanel, { imageTags } from '../components/ImagePanel.js';
 
 const imagesQuery = `
-query($sort: String!, $afterKey: String, $allowTags: [String], $omitTags: [String], $onlyTags: [String]) {
-  Images(limit: 12, sort: $sort, afterKey: $afterKey, allowTags: $allowTags, omitTags: $omitTags, onlyTags: $onlyTags) {
+query($allowTags: [String], $omitTags: [String]) {
+  Images(limit: 12, allowTags: $allowTags, omitTags: $omitTags) {
     id
     url
     tags
@@ -117,22 +117,8 @@ export default function Random() {
 
   return e('div', {className: 'container-fluid'}, [
     e('div', {key: 'options', className: 'row'}, [
-      e(Selector, { key: 'sort', label: 'sort', variable: 'sort', multiple: false }, [
-        e('option', {key: 'random', value: 'random'}, 'Random'),
-        e('option', {key: 'key', value: 'key'}, 'Key'),
-      ]),
-      e('div', {key: 'afterkey', className: 'd-flex col-2 justify-content-center align-items-center'}, [
-        e('label', {key: 'label', className: 'col-form-label flex-grow-1 text-end me-2'}, 'After Key'),
-        e('input', {
-          key: 'input',
-          className: 'form-control w-50',
-          onChange: makeOnChangeTagSelector('afterKey', false),
-          value: variables['afterKey'],
-        }),
-      ]),
       tagSelector('Allow Tags', 'allowTags'),
       tagSelector('Omit Tags', 'omitTags'),
-      tagSelector('Only Tags', 'onlyTags'),
       e('div', {
         key: 'clearimages',
         className: 'col-1 d-flex justify-content-center align-items-center'

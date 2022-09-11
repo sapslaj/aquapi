@@ -57,7 +57,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Image  func(childComplexity int, id string) int
-		Images func(childComplexity int, sort *string, limit *int, afterKey *string, allowTags []*string, omitTags []*string, onlyTags []*string) int
+		Images func(childComplexity int, limit *int, allowTags []*string, omitTags []*string) int
 	}
 }
 
@@ -68,7 +68,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Image(ctx context.Context, id string) (*model.Image, error)
-	Images(ctx context.Context, sort *string, limit *int, afterKey *string, allowTags []*string, omitTags []*string, onlyTags []*string) ([]*model.Image, error)
+	Images(ctx context.Context, limit *int, allowTags []*string, omitTags []*string) ([]*model.Image, error)
 }
 
 type executableSchema struct {
@@ -165,7 +165,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Images(childComplexity, args["sort"].(*string), args["limit"].(*int), args["afterKey"].(*string), args["allowTags"].([]*string), args["omitTags"].([]*string), args["onlyTags"].([]*string)), true
+		return e.complexity.Query.Images(childComplexity, args["limit"].(*int), args["allowTags"].([]*string), args["omitTags"].([]*string)), true
 
 	}
 	return 0, false
@@ -243,7 +243,7 @@ type Image {
 
 type Query {
   Image(id:String!): Image
-  Images(sort: String, limit: Int, afterKey: String, allowTags: [String], omitTags: [String], onlyTags: [String]): [Image]!
+  Images(limit: Int, allowTags: [String], omitTags: [String]): [Image]!
 }
 
 input ImageTagsInput {
@@ -327,60 +327,33 @@ func (ec *executionContext) field_Query_Image_args(ctx context.Context, rawArgs 
 func (ec *executionContext) field_Query_Images_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["sort"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["sort"] = arg0
-	var arg1 *int
+	var arg0 *int
 	if tmp, ok := rawArgs["limit"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["afterKey"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("afterKey"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["afterKey"] = arg2
-	var arg3 []*string
+	args["limit"] = arg0
+	var arg1 []*string
 	if tmp, ok := rawArgs["allowTags"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowTags"))
-		arg3, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["allowTags"] = arg3
-	var arg4 []*string
+	args["allowTags"] = arg1
+	var arg2 []*string
 	if tmp, ok := rawArgs["omitTags"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("omitTags"))
-		arg4, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["omitTags"] = arg4
-	var arg5 []*string
-	if tmp, ok := rawArgs["onlyTags"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyTags"))
-		arg5, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["onlyTags"] = arg5
+	args["omitTags"] = arg2
 	return args, nil
 }
 
@@ -732,7 +705,7 @@ func (ec *executionContext) _Query_Images(ctx context.Context, field graphql.Col
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Images(rctx, args["sort"].(*string), args["limit"].(*int), args["afterKey"].(*string), args["allowTags"].([]*string), args["omitTags"].([]*string), args["onlyTags"].([]*string))
+		return ec.resolvers.Query().Images(rctx, args["limit"].(*int), args["allowTags"].([]*string), args["omitTags"].([]*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

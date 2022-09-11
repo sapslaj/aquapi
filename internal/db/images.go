@@ -49,6 +49,23 @@ func NewImageFromDDBItem(item map[string]dynamodbtypes.AttributeValue) *Image {
 	return image
 }
 
+func GetImageById(id string) (*Image, error) {
+	dynamodbClient, err := awsutil.DefaultDynamoDBClient()
+	if err != nil {
+		return nil, err
+	}
+	getItemOutput, err := dynamodbClient.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(config.ImagesDynamoDBTable()),
+		Key: map[string]dynamodbtypes.AttributeValue{
+			"id": &dynamodbtypes.AttributeValueMemberS{Value: id},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return NewImageFromDDBItem(getItemOutput.Item), nil
+}
+
 func RandomImage(allowTags []*string, omitTags []*string) (*Image, error) {
 	dynamodbClient, err := awsutil.DefaultDynamoDBClient()
 	if err != nil {

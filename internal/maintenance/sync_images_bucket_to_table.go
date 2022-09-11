@@ -8,11 +8,29 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/sapslaj/aquapi/internal/aquapics"
 	"github.com/sapslaj/aquapi/internal/awsutil"
 	"github.com/sapslaj/aquapi/internal/config"
-	"github.com/sapslaj/aquapi/internal/db"
+	"github.com/sapslaj/aquapi/internal/service"
 )
+
+func SyncImageObjectToTable(ctx context.Context, object s3types.Object) {
+	image, err := service.NewImageFromS3Object(object)
+	if err != nil {
+		log.Print(err)
+		panic(err)
+	}
+	_, err = image.GetTags()
+	if err != nil {
+		log.Print(err)
+		panic(err)
+	}
+	err = image.Update()
+	if err != nil {
+		log.Print(err)
+		panic(err)
+	}
+	log.Print(image.ID)
+}
 
 func SyncImagesBucketToTable(ctx context.Context) error {
 	s3BucketClient, err := awsutil.GetS3ClientForBucketName(config.ImagesBucketName())
@@ -23,33 +41,16 @@ func SyncImagesBucketToTable(ctx context.Context) error {
 		Bucket: aws.String(config.ImagesBucketName()),
 	})
 	for imagesBucketPaginator.HasMorePages() {
+		var wg sync.WaitGroup
 		output, err := imagesBucketPaginator.NextPage(ctx)
 		if err != nil {
 			return err
 		}
-		var wg sync.WaitGroup
 		for _, object := range output.Contents {
 			wg.Add(1)
 			go func(object s3types.Object) {
 				defer wg.Done()
-				if aquapics.IsBadKey(*object.Key) {
-					return
-				}
-				tags, err := aquapics.GetTags(object)
-				if err != nil {
-					log.Print(err)
-					panic(err)
-				}
-				image := db.Image{
-					ID:   aws.ToString(object.Key),
-					Tags: tags,
-				}
-				_, err = image.CreateOrUpdate()
-				if err != nil {
-					log.Print(err)
-					panic(err)
-				}
-				log.Print(*object.Key)
+				SyncImageObjectToTable(ctx, object)
 			}(object)
 		}
 		wg.Wait()

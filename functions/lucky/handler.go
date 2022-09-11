@@ -6,50 +6,36 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/smithy-go/ptr"
 	"github.com/sapslaj/aquapi/internal/aquapics"
-	"github.com/sapslaj/aquapi/internal/utils"
+	"github.com/sapslaj/aquapi/internal/service"
 )
 
 // Response maps to APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
-func applicableImage(tags []string) bool {
-	for _, tag := range tags {
-		for _, t := range aquapics.TAGS {
-			if t == tag {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func handler(ctx context.Context) (Response, error) {
-	for {
-		object, err := aquapics.GetRandomFromS3()
-		if err != nil {
-			return Response{StatusCode: 503}, err
-		}
-		tags, err := aquapics.GetTags(object)
-		if err != nil {
-			return Response{StatusCode: 503}, err
-		}
-		if !applicableImage(tags) {
-			continue
-		}
-		url := utils.S3ObjectToUrl(object)
-		body, err := json.Marshal(map[string]string{"url": url})
-		if err != nil {
-			return Response{StatusCode: 503}, err
-		}
-		return Response{
-			StatusCode: 302,
-			Body:       string(body),
-			Headers: map[string]string{
-				"Location": url,
-			},
-		}, nil
+	imagesService := service.NewImagesService()
+	omitTags := ptr.StringSlice(aquapics.TAGS)
+	image, err := imagesService.GetRandomImageFilterTags(nil, omitTags)
+	if err != nil {
+		return Response{StatusCode: 503}, err
 	}
+	url, err := image.GetUrl()
+	if err != nil {
+		return Response{StatusCode: 503}, err
+	}
+	body, err := json.Marshal(map[string]string{"url": url})
+	if err != nil {
+		return Response{StatusCode: 503}, err
+	}
+	return Response{
+		StatusCode: 302,
+		Body:       string(body),
+		Headers: map[string]string{
+			"Location": url,
+		},
+	}, nil
 }
 
 func main() {

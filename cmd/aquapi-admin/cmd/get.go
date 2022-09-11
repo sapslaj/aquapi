@@ -3,8 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/sapslaj/aquapi/internal/aquapics"
+	"github.com/sapslaj/aquapi/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -14,16 +13,21 @@ var getCmd = &cobra.Command{
 	Short: "get a thing",
 	Long:  `todo`,
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, key := range args {
-			object, err := aquapics.GetImageObject(key)
+		imageService := service.NewImagesService()
+		if len(args) == 0 {
+			image, err := imageService.GetRandomImageFilterTags(nil, nil)
 			if err != nil {
 				log.Fatal(err)
 			}
-			tags, err := aquapics.GetTags(object)
-			if err != nil {
-				log.Fatal(err)
+			log.Printf("%s\ttags: %v", image.ID, image.Tags)
+		} else {
+			for _, key := range args {
+				image, err := imageService.FindById(key)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Printf("%s\ttags: %v", image.ID, image.Tags)
 			}
-			log.Printf("%s\ttags: %v", aws.ToString(object.Key), tags)
 		}
 	},
 }

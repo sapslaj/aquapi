@@ -9,13 +9,13 @@ import (
 	"github.com/aws/smithy-go/ptr"
 	"github.com/sapslaj/aquapi/internal/api"
 	"github.com/sapslaj/aquapi/internal/aquapics"
-	"github.com/sapslaj/aquapi/internal/db"
-	"github.com/sapslaj/aquapi/internal/utils"
+	"github.com/sapslaj/aquapi/internal/service"
 )
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	count := 1
 	nsfw := "none"
+	imageService := service.NewImagesService()
 	for key, value := range request.QueryStringParameters {
 		if key == "count" {
 			c, err := strconv.Atoi(value)
@@ -53,15 +53,18 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 	omitTagsInput = ptr.StringSlice(omitTags)
 	for len(images) < count {
-		dbImage, err := db.RandomImage(allowTagsInput, omitTagsInput)
-		images = append(images, &api.Image{
-			ID:   dbImage.ID,
-			URL:  utils.ImagesIDToUrl(dbImage.ID),
-			Tags: dbImage.Tags,
-		})
+		image, err := imageService.GetRandomImageFilterTags(allowTagsInput, omitTagsInput)
 		if err != nil {
 			return api.ResponseError(503, "An internal error occurred", err.Error()), err
 		}
+		imageDto, err := api.NewImageFromImagesServiceImage(image)
+		if err != nil {
+			return api.ResponseError(503, "An internal error occurred", err.Error()), err
+		}
+		if err != nil {
+			return api.ResponseError(503, "An internal error occurred", err.Error()), err
+		}
+		images = append(images, imageDto)
 	}
 
 	return api.ResponseSuccess(images), nil

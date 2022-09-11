@@ -81,31 +81,3 @@ func SetTags(object s3types.Object, tags []string) error {
 	})
 	return err
 }
-
-func AddTag(object s3types.Object, tag string) error {
-	existingTags, err := GetTags(object)
-	if err != nil {
-		return err
-	}
-	for _, existingTag := range existingTags {
-		if existingTag == tag {
-			return nil
-		}
-	}
-	tags := append(existingTags, tag)
-	return SetTags(object, tags)
-}
-
-func RemoveTag(object s3types.Object, tag string) error {
-	existingTags, err := GetTags(object)
-	if err != nil {
-		return err
-	}
-	for index, existingTag := range existingTags {
-		if existingTag == tag {
-			tags := append(existingTags[:index], existingTags[index+1:]...)
-			return SetTags(object, tags)
-		}
-	}
-	return nil
-}
