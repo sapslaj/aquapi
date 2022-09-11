@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/sapslaj/aquapi/internal/awsutil"
+	"github.com/sapslaj/aquapi/internal/config"
 )
 
 const tagsTagKey = "AquaPITags"
@@ -33,13 +34,13 @@ var TAGS = []string{
 }
 
 func GetTags(object s3types.Object) ([]string, error) {
-	s3BucketClient, err := awsutil.GetS3ClientForBucketName(ImagesBucketName)
+	s3BucketClient, err := awsutil.GetS3ClientForBucketName(config.ImagesBucketName())
 	tags := []string{}
 	if err != nil {
 		return tags, err
 	}
 	output, err := s3BucketClient.GetObjectTagging(context.TODO(), &s3.GetObjectTaggingInput{
-		Bucket: aws.String(ImagesBucketName),
+		Bucket: aws.String(config.ImagesBucketName()),
 		Key:    object.Key,
 	})
 	if err != nil {
@@ -61,13 +62,13 @@ func GetTags(object s3types.Object) ([]string, error) {
 }
 
 func SetTags(object s3types.Object, tags []string) error {
-	s3BucketClient, err := awsutil.GetS3ClientForBucketName(ImagesBucketName)
+	s3BucketClient, err := awsutil.GetS3ClientForBucketName(config.ImagesBucketName())
 	if err != nil {
 		return err
 	}
 	value := strings.Join(tags, tagSeperator)
 	_, err = s3BucketClient.PutObjectTagging(context.TODO(), &s3.PutObjectTaggingInput{
-		Bucket: aws.String(ImagesBucketName),
+		Bucket: aws.String(config.ImagesBucketName()),
 		Key:    object.Key,
 		Tagging: &s3types.Tagging{
 			TagSet: []s3types.Tag{
