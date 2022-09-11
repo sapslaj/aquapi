@@ -17,3 +17,7 @@ func ImagesBucketName() string {
 func ImagesDynamoDBTable() string {
 	return "aquapi-images-" + getEnv("AQUAPI_STAGE")
 }
+
+func ImagesHost() string {
+	return getEnv("AQUAPI_IMAGES_HOST")
+}

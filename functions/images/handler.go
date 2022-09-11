@@ -6,30 +6,12 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/smithy-go/ptr"
 	"github.com/sapslaj/aquapi/internal/api"
 	"github.com/sapslaj/aquapi/internal/aquapics"
+	"github.com/sapslaj/aquapi/internal/db"
 	"github.com/sapslaj/aquapi/internal/utils"
 )
-
-func applicableImage(tags []string, nsfw string) bool {
-	hasNsfwTag := false
-	for _, tag := range tags {
-		switch tag {
-		case aquapics.HIDDEN, aquapics.MEME, aquapics.COLLAGE:
-			return false
-		case aquapics.NSFW, aquapics.ECCHI, aquapics.HENTAI:
-			hasNsfwTag = true
-		}
-	}
-	if hasNsfwTag && nsfw == "none" {
-		return false
-	} else if hasNsfwTag && nsfw == "allowed" {
-		return true
-	} else if !hasNsfwTag && nsfw == "only" {
-		return false
-	}
-	return true
-}
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	count := 1
@@ -60,21 +42,25 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}
 	}
 	images := []*api.Image{}
+	var allowTagsInput []*string
+	var omitTagsInput []*string
+	omitTags := []string{aquapics.HIDDEN, aquapics.MEME, aquapics.COLLAGE}
+	if nsfw == "none" {
+		omitTags = append(omitTags, aquapics.ECCHI, aquapics.HENTAI)
+	} else if nsfw == "only" {
+		allowTags := []string{aquapics.ECCHI, aquapics.HENTAI}
+		allowTagsInput = ptr.StringSlice(allowTags)
+	}
+	omitTagsInput = ptr.StringSlice(omitTags)
 	for len(images) < count {
-		object, err := aquapics.GetRandomFromS3()
+		dbImage, err := db.RandomImage(allowTagsInput, omitTagsInput)
+		images = append(images, &api.Image{
+			ID:   dbImage.ID,
+			URL:  utils.ImagesIDToUrl(dbImage.ID),
+			Tags: dbImage.Tags,
+		})
 		if err != nil {
 			return api.ResponseError(503, "An internal error occurred", err.Error()), err
-		}
-		tags, err := aquapics.GetTags(object)
-		if err != nil {
-			return api.ResponseError(503, "An internal error occurred", err.Error()), err
-		}
-		if applicableImage(tags, nsfw) {
-			images = append(images, &api.Image{
-				ID:   *object.Key,
-				URL:  utils.S3ObjectToUrl(object),
-				Tags: tags,
-			})
 		}
 	}
 

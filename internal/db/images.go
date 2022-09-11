@@ -49,7 +49,7 @@ func NewImageFromDDBItem(item map[string]dynamodbtypes.AttributeValue) *Image {
 	return image
 }
 
-func RandomImage(allowTags []*string, omitTags []*string, onlyTags []*string) (*Image, error) {
+func RandomImage(allowTags []*string, omitTags []*string) (*Image, error) {
 	dynamodbClient, err := awsutil.DefaultDynamoDBClient()
 	if err != nil {
 		return nil, err
@@ -59,21 +59,25 @@ func RandomImage(allowTags []*string, omitTags []*string, onlyTags []*string) (*
 		"#id": "id",
 	}
 	expressionAttributeValues := map[string]dynamodbtypes.AttributeValue{}
-	if onlyTags != nil || omitTags != nil {
+	if allowTags != nil || omitTags != nil {
 		expressionAttributeNames["#tags"] = "tags"
 	}
-	if onlyTags != nil {
-		for tagIdx, tag := range onlyTags {
+	for tagIdx, tag := range ptr.ToStringSlice(omitTags) {
+		attrValue := fmt.Sprintf(":omittag%d", tagIdx)
+		filterExpression += fmt.Sprintf(" AND NOT contains(#tags, %s)", attrValue)
+		expressionAttributeValues[attrValue] = &dynamodbtypes.AttributeValueMemberS{Value: tag}
+	}
+	if allowTags != nil {
+		filterExpression += "AND ("
+		for tagIdx, tag := range allowTags {
 			attrValue := fmt.Sprintf(":onlytag%d", tagIdx)
-			filterExpression += fmt.Sprintf(" AND contains(#tags, %s)", attrValue)
+			if tagIdx > 0 {
+				filterExpression += " OR "
+			}
+			filterExpression += fmt.Sprintf("contains(#tags, %s)", attrValue)
 			expressionAttributeValues[attrValue] = &dynamodbtypes.AttributeValueMemberS{Value: *tag}
 		}
-	} else {
-		for tagIdx, tag := range ptr.ToStringSlice(omitTags) {
-			attrValue := fmt.Sprintf(":omittag%d", tagIdx)
-			filterExpression += fmt.Sprintf(" AND NOT contains(#tags, %s)", attrValue)
-			expressionAttributeValues[attrValue] = &dynamodbtypes.AttributeValueMemberS{Value: tag}
-		}
+		filterExpression += ")"
 	}
 	for {
 		prefix := randidCharacter()
