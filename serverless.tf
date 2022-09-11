@@ -13,6 +13,20 @@ data "aws_iam_policy_document" "role" {
     ]
     resources = [sensitive(join("", [var.images_bucket_arn, "/*"]))]
   }
+
+  statement {
+    actions = [
+      "dynamodb:BatchGetItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [var.dynamodb_images_table_arn]
+  }
 }
 
 locals {
@@ -33,6 +47,7 @@ locals {
       environment = {
         AQUAPI_IMAGES_HOST   = var.images_domain
         AQUAPI_IMAGES_BUCKET = sensitive(var.images_bucket_id)
+        AQUAPI_STAGE         = var.stage
       }
       httpApi = {
         cors = true

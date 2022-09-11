@@ -16,7 +16,7 @@ module "images_bucket" {
   }
 }
 
-module "dynamodb_table" {
+module "dynamodb_images_table" {
   source  = "terraform-aws-modules/dynamodb-table/aws"
   version = "~> 3.1.1"
 
@@ -98,12 +98,14 @@ resource "cloudflare_record" "images" {
 module "serverless" {
   source = "../"
 
-  aws_region        = data.aws_region.current.name
-  api_domain        = var.api_domain
-  images_bucket_arn = module.images_bucket.s3_bucket_arn
-  images_bucket_id  = module.images_bucket.s3_bucket_id
-  images_domain     = var.images_domain
-  stage             = var.stage
+  aws_region                = data.aws_region.current.name
+  api_domain                = var.api_domain
+  dynamodb_images_table_arn = module.dynamodb_images_table.dynamodb_table_arn
+  dynamodb_images_table_id  = module.dynamodb_images_table.dynamodb_table_id
+  images_bucket_arn         = module.images_bucket.s3_bucket_arn
+  images_bucket_id          = module.images_bucket.s3_bucket_id
+  images_domain             = var.images_domain
+  stage                     = var.stage
 }
 
 data "aws_cloudformation_stack" "serverless" {
