@@ -8,12 +8,8 @@ module "images_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> v2.13.0"
 
-  acl           = "public-read"
+  acl           = "private"
   bucket_prefix = "aquapi-images"
-  website = {
-    index_document = "index.html"
-    error_document = "error.html"
-  }
 }
 
 module "dynamodb_images_table" {
@@ -68,10 +64,17 @@ module "cloudfront" {
 
   default_root_object = "index.html"
 
+  create_origin_access_identity = true
+  origin_access_identities = {
+    images_s3 = "AquaPI Cloudfront ${var.stage} to ${module.images_bucket.s3_bucket_id}"
+  }
+
   origin = {
     s3 = {
       domain_name      = module.images_bucket.s3_bucket_bucket_regional_domain_name
-      s3_origin_config = {}
+      s3_origin_config = {
+        origin_access_identity = "images_s3"
+      }
     }
   }
 
@@ -84,6 +87,23 @@ module "cloudfront" {
     acm_certificate_arn = data.aws_acm_certificate.wildcard.arn
     ssl_support_method  = "sni-only"
   }
+}
+
+data "aws_iam_policy_document" "images_bucket_policy" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${module.images_bucket.s3_bucket_arn}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = module.cloudfront.cloudfront_origin_access_identity_iam_arns
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "images" {
+  bucket = module.images_bucket.s3_bucket_id
+  policy = data.aws_iam_policy_document.images_bucket_policy.json
 }
 
 resource "cloudflare_record" "images" {
